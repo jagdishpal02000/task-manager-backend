@@ -48,7 +48,7 @@ jobs:
       run: |
         ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "sudo rm -rf task-manager-backend && sudo mkdir -p task-manager-backend"
         sudo tar --exclude=".git*" --exclude="id_rsa" --exclude="*.yml" -cf - . | ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "sudo tar -C task-manager-backend -xf -"
-        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker build --rm -t task-manager-backend-image task-manager-backend-image/"
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker build --rm -t task-manager-backend-image task-manager-backend/"
         ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker stop task-manager-backend || true"
         ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker run  -p 3080:3080 --rm --name task-manager-backend -dt task-manager-backend-image"
         ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker system prune -f"
