@@ -1,0 +1,54 @@
+name: Prod API Deployment
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    # - name: Set up Node.js
+    #   uses: actions/setup-node@v2
+    #   with:
+    #     node-version: '18.17'
+    
+    - name: Setting Environment Variables
+      run: |
+        ############### SETTING ENV FILE STARTS ######################################################
+        FILE_NAME=".env"
+        echo "TZ='Asia/Kolkata'" > $FILE_NAME
+        echo "LISTEN_PORT=${{vars.LISTEN_PORT}}" >> $FILE_NAME
+        echo "ACCESS_TOKEN_EXPIRY=${{vars.ACCESS_TOKEN_EXPIRY}}" >> $FILE_NAME
+        echo "REFRESH_TOKEN_EXPIRY=${{vars.REFRESH_TOKEN_EXPIRY}}" >> $FILE_NAME
+        
+        echo "DB_USERNAME=${{secrets.DB_USERNAME}}" >> $FILE_NAME
+        echo "DB_HOST=${{secrets.DB_HOST}}" >> $FILE_NAME
+        echo "DB_NAME=${{secrets.DB_NAME}}" >> $FILE_NAME
+        echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> $FILE_NAME
+        echo "JWT_PRIVATE_KEY=${{secrets.JWT_PRIVATE_KEY}}" >> $FILE_NAME
+        
+        ############### SETTING ENV FILE END ######################################################
+
+    - name: SSH Connection
+      run: |
+        mkdir -p ~/.ssh
+        echo "$PRIVATE_KEY_CONTENT" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} echo "Connection established"
+      env:
+        PRIVATE_KEY_CONTENT: ${{secrets.SSH_KEY}}
+      
+    - name: Coping Files to Server
+      run: |
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "sudo rm -rf task-manager-backend && sudo mkdir -p task-manager-backend"
+        sudo tar --exclude=".git*" --exclude="id_rsa" --exclude="*.yml" -cf - . | ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "sudo tar -C task-manager-backend -xf -"
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker build --rm -t task-manager-backend-image task-manager-backend-image/"
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker stop task-manager-backend || true"
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker run  -p 3080:3080 --rm --name task-manager-backend -dt task-manager-backend-image"
+        ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "docker system prune -f"
