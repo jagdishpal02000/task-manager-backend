@@ -41,6 +41,7 @@ exports.createTask = asyncWrapper(async (req, res) => {
             return res.status(200).json({
                 message: message,
                 task_id : createdTask.id,
+                task : createdTask,
             });
     } else {
         res.status(status).json({

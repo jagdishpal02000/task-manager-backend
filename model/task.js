@@ -1,7 +1,7 @@
 const {queryExecuter} = require('../utils/query-executer');
 
 const createTask= async ({uid,title,description,due_date}) =>{
-    const task = await queryExecuter(`INSERT INTO temp_tasks(title,description,uid,due_date,created_datetime,status) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,[title,description,uid,due_date,new Date(),'incompleted']);
+    const task = await queryExecuter(`INSERT INTO temp_tasks(title,description,uid,due_date,created_datetime,status) VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,[title,description,uid,due_date,new Date(),'incompleted']);
     return task;
 }
 
