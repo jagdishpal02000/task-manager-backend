@@ -87,6 +87,7 @@ exports.login = asyncWrapper(async (req, res, next) => {
             return res.status(status).json({
                 message:'login successfully',
                 refresh_token: refreshToken,
+                name:user.name,
             });      
         }else{
             return res.status(status).json({
